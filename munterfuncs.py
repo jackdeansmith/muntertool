@@ -10,8 +10,3 @@ def munter_reverse(distance, elevation, time):
 # Accepts a distance and elevation and returns a munter work value, this is divided by rate to get time
 def munter_work(distance, elevation):
  return (distance + elevation/100)
-
- 
-# Get the munter rate value for a GPX point sequence
-# def munter_of_pt_sequence(pt_sequence):
-#     pass
