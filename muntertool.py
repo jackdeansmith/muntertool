@@ -17,12 +17,11 @@ def muntertool(gpxfile):
     # Validate that the GPX contains exactly one track, TODO: support multi-track gpx files
     if(not len(gpx.tracks) == 1):
         raise click.UsageError("Error: GPX file must contain exactly one track. Found {} tracks.".format(len(gpx.tracks)), ctx=None)
+    track = gpx.tracks[0]
 
-    # Print out all the points, TODO: the actual munter logic here. TODO: how to handle segments
-    for track in gpx.tracks:
-        for segment in track.segments:
-            for point in segment.points:
-                print('Point at ({0},{1}) -> {2} @{3}'.format(point.latitude, point.longitude, point.elevation, point.time))
+    for segment in track.segments:
+        for point in segment.points:
+            print('Point at ({0},{1}) -> {2} @{3}'.format(point.latitude, point.longitude, point.elevation, point.time))
 
 
 if __name__ == '__main__':
