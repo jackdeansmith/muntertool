@@ -1,3 +1,4 @@
+from math import atan, radians
 import click
 import gpxpy
 import gpxpy.gpx
@@ -10,7 +11,8 @@ SECONDS_PER_HOUR = 60 * 60
 @click.command()
 @click.argument('gpxfile', type=click.File('r'))
 @click.option('--chunk-length', default=50.0, show_default=True, help="Length of chunk in meters that track is broken into for analysis. Defaults to value that caltopo uses.")
-def muntertool(gpxfile, chunk_length):
+@click.option('--grade-cutoff', default=5, show_default=True, help="Grade in degrees used to decide if a chunk is uphill, downhill, or flat.")
+def muntertool(gpxfile, chunk_length, grade_cutoff):
     """Analyze the track described by GPXFILE"""
     # TODO: Better docs here
 
@@ -34,12 +36,10 @@ def muntertool(gpxfile, chunk_length):
         raise click.UsageError("Error: Could not extract chunks from track.".format(len(gpx.tracks)), ctx=None)
 
     # Chunk report 
-    print(chunk_report(chunks))
+    print(chunk_report(chunks, grade_cutoff))
 
-    # munterstats(track, chunklength=chunk_length)
-
-def chunk_report(chunks):
-    headers = ["Start Point", "End Point", "Distance", "Elevation", "Time", "Munter Rate"]
+def chunk_report(chunks, grade_cutoff):
+    headers = ["Start Point", "End Point", "Distance", "Elevation", "Time", "Grade Category", "Munter Rate"]
     table = []
 
     for chunk in chunks: 
@@ -47,17 +47,10 @@ def chunk_report(chunks):
         st_pt = pt_fmt_str.format(chunk.first_point.longitude, chunk.first_point.latitude)
         end_pt = pt_fmt_str.format(chunk.last_point.longitude, chunk.last_point.latitude)
         munter_rate = munterfuncs.munter_reverse(chunk.distance, chunk.delta_elevation(), chunk.delta_time().total_seconds()/SECONDS_PER_HOUR)
-        table.append([st_pt, end_pt, chunk.distance, chunk.delta_elevation(), chunk.delta_time(), munter_rate])
+        category = grade_classification(chunk, grade_cutoff)
+        table.append([st_pt, end_pt, chunk.distance, chunk.delta_elevation(), chunk.delta_time(), category, munter_rate])
 
     return(tabulate(table, headers, tablefmt="plain"))
-
-# def munterstats(track, chunklength=50):
-#     """Accepts a gpx track and breaks it into 'chunks' for munter analysis, analyzes each chunk."""
-
-#     for chunk in chunks: 
-#         # print(chunk)
-#         munter_rate = munterfuncs.munter_reverse(chunk.distance, chunk.delta_elevation(), chunk.delta_time().total_seconds()/SECONDS_PER_HOUR)
-#         print(munter_rate)
 
 class Chunk: 
     def __init__(self, first_point, last_point, distance):
@@ -102,6 +95,17 @@ def chunkify(segment, chunklength=50):
         chunks.append(Chunk(current_chunk_beginning_point, current_chunk_last_point, current_chunk_distance))
 
     return chunks
+
+def grade_classification(chunk, grade_cutoff):
+    # slope = chunk.delta_elevation() / chunk.distance # TODO: this could be somewhat off because chunks have undulations. Investigate
+    grade = atan(chunk.delta_elevation()/chunk.distance) 
+    grade_cutoff = radians(grade_cutoff) 
+    if(grade > grade_cutoff):
+        return "UP"
+    elif(grade > -grade_cutoff):
+        return "FLAT"
+    else: 
+        return "DOWN"
 
 
 if __name__ == '__main__':
