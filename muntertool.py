@@ -8,7 +8,7 @@ SECONDS_PER_HOUR = 60 * 60
 
 @click.command()
 @click.argument('gpxfile', type=click.File('r'))
-@click.option('-c', '--chunk-length', default=50.0, show_default=True, help="Length of chunk in meters that track is broken into for analysis. Defaults to value that caltopo uses.")
+@click.option('--chunk-length', default=50.0, show_default=True, help="Length of chunk in meters that track is broken into for analysis. Defaults to value that caltopo uses.")
 def muntertool(gpxfile, chunk_length):
     """Analyze the track described by GPXFILE"""
     # TODO: Better docs here
