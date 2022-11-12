@@ -1,4 +1,4 @@
-from math import atan, radians
+from math import atan, radians, degrees
 import click
 import gpxpy
 import gpxpy.gpx
@@ -39,16 +39,15 @@ def muntertool(gpxfile, chunk_length, grade_cutoff):
     print(chunk_report(chunks, grade_cutoff))
 
 def chunk_report(chunks, grade_cutoff):
-    headers = ["Start Point", "End Point", "Distance", "Elevation", "Time", "Grade Category", "Munter Rate"]
+    headers = ["Start Point", "End Point", "Distance", "Elevation", "Time", "Grade", "Category", "Munter Rate"]
     table = []
 
     for chunk in chunks: 
         pt_fmt_str = "({}, {})"
         st_pt = pt_fmt_str.format(chunk.first_point.longitude, chunk.first_point.latitude)
         end_pt = pt_fmt_str.format(chunk.last_point.longitude, chunk.last_point.latitude)
-        munter_rate = munterfuncs.munter_reverse(chunk.distance, chunk.delta_elevation(), chunk.delta_time().total_seconds()/SECONDS_PER_HOUR)
         category = grade_classification(chunk, grade_cutoff)
-        table.append([st_pt, end_pt, chunk.distance, chunk.delta_elevation(), chunk.delta_time(), category, munter_rate])
+        table.append([st_pt, end_pt, chunk.distance, chunk.delta_elevation, chunk.delta_time, formatted_grade(chunk.grade), category, chunk.munter_rate])
 
     return(tabulate(table, headers, tablefmt="plain"))
 
@@ -58,11 +57,11 @@ class Chunk:
         self.last_point = last_point
         self.distance = distance
 
-    def delta_elevation(self):
-        return self.last_point.elevation - self.first_point.elevation
+        self.delta_elevation = self.last_point.elevation - self.first_point.elevation 
+        self.delta_time = self.last_point.time - self.first_point.time
+        self.munter_rate = munterfuncs.munter_reverse(self.distance, self.delta_elevation, self.delta_time.total_seconds()/SECONDS_PER_HOUR)
 
-    def delta_time(self):
-        return self.last_point.time - self.first_point.time
+        self.grade = degrees(atan(self.delta_elevation/self.distance))
 
     def __repr__(self):
         return "Chunk(first point {}, last point {}, distance {}".format(
@@ -96,13 +95,14 @@ def chunkify(segment, chunklength=50):
 
     return chunks
 
+
+def formatted_grade(grade):
+    return "{:.1f}°".format(grade)
+
 def grade_classification(chunk, grade_cutoff):
-    # slope = chunk.delta_elevation() / chunk.distance # TODO: this could be somewhat off because chunks have undulations. Investigate
-    grade = atan(chunk.delta_elevation()/chunk.distance) 
-    grade_cutoff = radians(grade_cutoff) 
-    if(grade > grade_cutoff):
+    if(chunk.grade > grade_cutoff):
         return "UP"
-    elif(grade > -grade_cutoff):
+    elif(chunk.grade > -grade_cutoff):
         return "FLAT"
     else: 
         return "DOWN"
