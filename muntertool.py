@@ -39,15 +39,15 @@ def muntertool(gpxfile, chunk_length, grade_cutoff):
     print(chunk_report(chunks, grade_cutoff))
 
 def chunk_report(chunks, grade_cutoff):
-    headers = ["Start Point", "End Point", "Distance", "Elevation", "Time", "Grade", "Category", "Munter Rate"]
+    headers = ["Chunk", "Distance", "Elevation", "Time", "Grade", "Category", "Munter Rate"]
     table = []
 
-    for chunk in chunks: 
+    for (idx, chunk) in enumerate(chunks): 
         pt_fmt_str = "({}, {})"
         st_pt = pt_fmt_str.format(chunk.first_point.longitude, chunk.first_point.latitude)
         end_pt = pt_fmt_str.format(chunk.last_point.longitude, chunk.last_point.latitude)
         category = grade_classification(chunk, grade_cutoff)
-        table.append([st_pt, end_pt, chunk.distance, chunk.delta_elevation, chunk.delta_time, formatted_grade(chunk.grade), category, chunk.munter_rate])
+        table.append([idx, chunk.distance, chunk.delta_elevation, chunk.delta_time, formatted_grade(chunk.grade), category, chunk.munter_rate])
 
     return(tabulate(table, headers, tablefmt="plain"))
 
