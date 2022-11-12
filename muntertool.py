@@ -3,6 +3,7 @@ import gpxpy
 import gpxpy.gpx
 import gisutil
 import munterfuncs
+from tabulate import tabulate
 
 SECONDS_PER_HOUR = 60 * 60
 
@@ -24,21 +25,39 @@ def muntertool(gpxfile, chunk_length):
         raise click.UsageError("Error: GPX file must contain exactly one track. Found {} tracks.".format(len(gpx.tracks)), ctx=None)
     track = gpx.tracks[0]
 
-    munterstats(track, chunklength=chunk_length)
-
-def munterstats(track, chunklength=50):
-    """Accepts a gpx track and breaks it into 'chunks' for munter analysis, analyzes each chunk."""
-
+    # Break track into chunks
     chunks = []
     for segment in track.segments:
-        chunks.extend(chunkify(segment, chunklength=chunklength))
+        chunks.extend(chunkify(segment, chunklength=chunk_length))
+    
+    if(not len(chunks) > 0):
+        raise click.UsageError("Error: Could not extract chunks from track.".format(len(gpx.tracks)), ctx=None)
 
-    # TODO: verify that we got some chunks
+    # Chunk report 
+    print(chunk_report(chunks))
+
+    # munterstats(track, chunklength=chunk_length)
+
+def chunk_report(chunks):
+    headers = ["Start Point", "End Point", "Distance", "Elevation", "Time", "Munter Rate"]
+    table = []
 
     for chunk in chunks: 
-        # print(chunk)
+        pt_fmt_str = "({}, {})"
+        st_pt = pt_fmt_str.format(chunk.first_point.longitude, chunk.first_point.latitude)
+        end_pt = pt_fmt_str.format(chunk.last_point.longitude, chunk.last_point.latitude)
         munter_rate = munterfuncs.munter_reverse(chunk.distance, chunk.delta_elevation(), chunk.delta_time().total_seconds()/SECONDS_PER_HOUR)
-        print(munter_rate)
+        table.append([st_pt, end_pt, chunk.distance, chunk.delta_elevation(), chunk.delta_time(), munter_rate])
+
+    return(tabulate(table, headers, tablefmt="plain"))
+
+# def munterstats(track, chunklength=50):
+#     """Accepts a gpx track and breaks it into 'chunks' for munter analysis, analyzes each chunk."""
+
+#     for chunk in chunks: 
+#         # print(chunk)
+#         munter_rate = munterfuncs.munter_reverse(chunk.distance, chunk.delta_elevation(), chunk.delta_time().total_seconds()/SECONDS_PER_HOUR)
+#         print(munter_rate)
 
 class Chunk: 
     def __init__(self, first_point, last_point, distance):
