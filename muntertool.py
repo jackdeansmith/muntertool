@@ -33,6 +33,8 @@ def munterstats(track, chunklength=50):
     for segment in track.segments:
         chunks.extend(chunkify(segment, chunklength=chunklength))
 
+    # TODO: verify that we got some chunks
+
     for chunk in chunks: 
         # print(chunk)
         munter_rate = munterfuncs.munter_reverse(chunk.distance, chunk.delta_elevation(), chunk.delta_time().total_seconds()/SECONDS_PER_HOUR)
@@ -57,9 +59,6 @@ class Chunk:
             self.distance)
 
 def chunkify(segment, chunklength=50):
-    
-    #TODO: Assert segment has at least two points
-
     chunks = []
 
     current_chunk_distance = 0
