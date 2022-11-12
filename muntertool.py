@@ -49,7 +49,9 @@ def chunk_report(chunks, grade_cutoff):
         category = grade_classification(chunk, grade_cutoff)
         table.append([idx, chunk.distance, chunk.delta_elevation, chunk.delta_time, formatted_grade(chunk.grade), category, chunk.munter_rate])
 
-    return(tabulate(table, headers, tablefmt="plain"))
+    preamble = "Chunk Report:"
+    table = tabulate(table, headers, tablefmt="plain")
+    return preamble + '\n' + table
 
 class Chunk: 
     def __init__(self, first_point, last_point, distance):
