@@ -8,7 +8,8 @@ SECONDS_PER_HOUR = 60 * 60
 
 @click.command()
 @click.argument('gpxfile', type=click.File('r'))
-def muntertool(gpxfile):
+@click.option('-c', '--chunk-length', default=50.0, show_default=True, help="Length of chunk in meters that track is broken into for analysis. Defaults to value that caltopo uses.")
+def muntertool(gpxfile, chunk_length):
     """Analyze the track described by GPXFILE"""
     # TODO: Better docs here
 
@@ -23,14 +24,14 @@ def muntertool(gpxfile):
         raise click.UsageError("Error: GPX file must contain exactly one track. Found {} tracks.".format(len(gpx.tracks)), ctx=None)
     track = gpx.tracks[0]
 
-    munterstats(track)
+    munterstats(track, chunklength=chunk_length)
 
 def munterstats(track, chunklength=50):
     """Accepts a gpx track and breaks it into 'chunks' for munter analysis, analyzes each chunk."""
 
     chunks = []
     for segment in track.segments:
-        chunks.extend(chunkify(segment))
+        chunks.extend(chunkify(segment, chunklength=chunklength))
 
     for chunk in chunks: 
         # print(chunk)
