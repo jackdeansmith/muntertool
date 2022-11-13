@@ -38,6 +38,9 @@ def muntertool(gpxfile, chunk_length, grade_cutoff):
     # Chunk report 
     print(chunk_report(chunks, grade_cutoff))
 
+    # Statistical report 
+    print(statistical_report(chunks, grade_cutoff))
+
 def chunk_report(chunks, grade_cutoff):
     headers = ["Chunk", "Distance", "Elevation", "Time", "Grade", "Category", "Munter Rate"]
     table = []
@@ -52,6 +55,64 @@ def chunk_report(chunks, grade_cutoff):
     preamble = "Chunk Report:"
     table = tabulate(table, headers, tablefmt="plain")
     return preamble + '\n' + table
+
+def statistical_report(chunks, grade_cutoff):
+
+    # Classify all the chunks 
+    uphill_chunks = []
+    flat_chunks = []
+    downhill_chunks = []
+
+    for chunk in chunks:
+        classification = grade_classification(chunk, grade_cutoff)
+        if(classification == "UP"):
+            uphill_chunks.append(chunk)
+        elif(classification == "FLAT"):
+            flat_chunks.append(chunk)
+        elif(classification == "DOWN"):
+            downhill_chunks.append(chunk)
+
+    # Number of chunks in each class
+    report = []
+    report.append("Divided track into {} chunks".format(len(chunks)))    
+    report.append("Number of uphill chunks: {}".format(len(uphill_chunks)))    
+    report.append("Number of flat chunks: {}".format(len(flat_chunks)))    
+    report.append("Number of downhill chunks: {}".format(len(downhill_chunks)))    
+    report.append("")
+
+    # Mean munter rates in each class
+    mean_uphill_munter = mean_munter_rate(uphill_chunks)
+    mean_flat_munter = mean_munter_rate(flat_chunks)
+    mean_downhill_munter = mean_munter_rate(downhill_chunks)
+
+    report.append("Mean uphill munter rate: {:.2f}".format(mean_uphill_munter))
+    report.append("Mean flat munter rate: {:.2f}".format(mean_flat_munter))
+    report.append("Mean downhill munter rate: {:.2f}".format(mean_downhill_munter))
+    report.append("")
+
+    # Median munter rates in each class
+    median_uphill_munter = median_munter_rate(uphill_chunks)
+    median_flat_munter = median_munter_rate(flat_chunks)
+    median_downhill_munter = median_munter_rate(downhill_chunks)
+
+    report.append("Median uphill munter rate: {:.2f}".format(median_uphill_munter))
+    report.append("Median flat munter rate: {:.2f}".format(median_flat_munter))
+    report.append("Median downhill munter rate: {:.2f}".format(median_downhill_munter))
+    report.append("")
+
+
+    return "\n".join(report)
+
+def mean_munter_rate(chunks):
+    return sum([x.munter_rate for x in chunks]) / len(chunks)
+
+def median_munter_rate(chunks):
+    rates = [x.munter_rate for x in chunks]
+    rates.sort()
+    if(len(rates) % 2 == 0):
+        return (rates[len(rates)//2] + rates[len(rates)//2 - 1]) / 2
+    else: 
+        return rates[len(rates)//2]
 
 class Chunk: 
     def __init__(self, first_point, last_point, distance):
