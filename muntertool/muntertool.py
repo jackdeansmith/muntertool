@@ -93,24 +93,36 @@ def statistical_report(chunks, grade_cutoff, desired_percentiles=[0.5]):
     flat_rates = [x.munter_rate for x in flat_chunks]
     down_rates = [x.munter_rate for x in  down_chunks]
 
-    mean_uphill_munter = mean(up_rates)
-    mean_flat_munter = mean(flat_rates)
-    mean_downhill_munter = mean(down_rates)
+    mean_uphill_munter = maybe_mean_pretty_print(up_rates)
+    mean_flat_munter = maybe_mean_pretty_print(flat_rates)
+    mean_downhill_munter = maybe_mean_pretty_print(down_rates)
 
     percentile_headers = [pretty_print_percentile_header(x) for x in desired_percentiles]
     headers = ["Grade", "#Chunks", "Mean Rate"] + percentile_headers
 
     table = []
-    table.append(["UP", len(up_chunks), mean_uphill_munter] + percentiles(up_rates, desired_percentiles))
-    table.append(["FLAT", len(flat_chunks), mean_flat_munter]+ percentiles(flat_rates, desired_percentiles))
-    table.append(["DOWN", len(down_chunks), mean_downhill_munter] + percentiles(down_rates, desired_percentiles))
+    table.append(["UP", len(up_chunks), mean_uphill_munter] + maybe_percentiles_pretty_print(up_rates, desired_percentiles))
+    table.append(["FLAT", len(flat_chunks), mean_flat_munter]+ maybe_percentiles_pretty_print(flat_rates, desired_percentiles))
+    table.append(["DOWN", len(down_chunks), mean_downhill_munter] + maybe_percentiles_pretty_print(down_rates, desired_percentiles))
     return tabulate(table, headers, tablefmt="simple")
 
 def pretty_print_percentile_header(num):
     return "{}th Percentile Rate".format(num * 100)
 
+def maybe_mean_pretty_print(nums):
+    if(len(nums) == 0):
+        return "-"
+    else:
+        return mean(nums)
+
 def mean(nums):
     return sum(nums) / len(nums)
+
+def maybe_percentiles_pretty_print(data, desired_percentiles):
+    if(len(data) == 0):
+        return ["-" for _ in desired_percentiles]
+    else:
+        return percentiles(data, desired_percentiles)
 
 def percentiles(data, desired_percentiles):
     data.sort()
