@@ -69,7 +69,7 @@ def chunk_report(chunks, grade_cutoff, showcordinates):
     table = []
 
     for (idx, chunk) in enumerate(chunks): 
-        pt_fmt_str = "({}, {})"
+        pt_fmt_str = "({:.7f}, {:.7f})"
         st_pt = pt_fmt_str.format(chunk.first_point.longitude, chunk.first_point.latitude)
         end_pt = pt_fmt_str.format(chunk.last_point.longitude, chunk.last_point.latitude)
         category = grade_classification(chunk, grade_cutoff)
