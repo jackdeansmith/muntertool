@@ -32,8 +32,9 @@ def stats(gpxfile, chunk_length, grade_cutoff, progress, percentile):
 @click.argument('gpxfile', type=click.File('r'))
 @click.option('--chunk-length', default=50.0, show_default=True, help="Length of chunk in meters that track is broken into for analysis.")
 @click.option('--grade-cutoff', default=5, show_default=True, help="Grade in degrees used to decide if a chunk is uphill, downhill, or flat.")
+@click.option('--showcordinates', is_flag=True, default=False, help="Show the start and end cordinates for each chunk")
 @click.option('--progress', is_flag=True, default=False, help="Show a progress bar as gpx points are processed")
-def chunks(gpxfile, chunk_length, grade_cutoff, progress):
+def chunks(gpxfile, chunk_length, grade_cutoff, showcordinates, progress):
     """Break GPXFILE into chunks and output details."""
 
     track = shared_parse_gpx_track(gpxfile)
@@ -43,7 +44,7 @@ def chunks(gpxfile, chunk_length, grade_cutoff, progress):
         raise click.UsageError("Error: Could not extract chunks from track.", ctx=None)
 
     # Statistical report 
-    print(chunk_report(chunks, grade_cutoff))
+    print(chunk_report(chunks, grade_cutoff, showcordinates))
 
 def shared_parse_gpx_track(gpxfile):
     # Parse the GPX file
@@ -59,8 +60,12 @@ def shared_parse_gpx_track(gpxfile):
 
     return track
 
-def chunk_report(chunks, grade_cutoff):
-    headers = ["Chunk", "Distance", "Elevation", "Time", "Grade", "Category", "Munter Rate"]
+def chunk_report(chunks, grade_cutoff, showcordinates):
+    headers = ["Chunk"] 
+    if(showcordinates):
+        headers.extend(["Start", "End"])
+    headers.extend(["Distance", "Elevation", "Time", "Grade", "Category", "Munter Rate"])
+
     table = []
 
     for (idx, chunk) in enumerate(chunks): 
@@ -68,7 +73,12 @@ def chunk_report(chunks, grade_cutoff):
         st_pt = pt_fmt_str.format(chunk.first_point.longitude, chunk.first_point.latitude)
         end_pt = pt_fmt_str.format(chunk.last_point.longitude, chunk.last_point.latitude)
         category = grade_classification(chunk, grade_cutoff)
-        table.append([idx, chunk.distance, chunk.delta_elevation, chunk.delta_time, formatted_grade(chunk.grade), category, chunk.munter_rate])
+
+        tabledata = [idx]
+        if(showcordinates):
+            tabledata.extend([st_pt, end_pt])
+        tabledata.extend([chunk.distance, chunk.delta_elevation, chunk.delta_time, formatted_grade(chunk.grade), category, chunk.munter_rate])
+        table.append(tabledata)
 
     return tabulate(table, headers, tablefmt="simple")
 
