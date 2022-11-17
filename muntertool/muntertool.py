@@ -4,6 +4,7 @@ import gpxpy
 import gpxpy.gpx
 from tabulate import tabulate
 import pyproj
+from tqdm import tqdm
 
 SECONDS_PER_HOUR = 60 * 60
 
@@ -11,7 +12,8 @@ SECONDS_PER_HOUR = 60 * 60
 @click.argument('gpxfile', type=click.File('r'))
 @click.option('--chunk-length', default=50.0, show_default=True, help="Length of chunk in meters that track is broken into for analysis.")
 @click.option('--grade-cutoff', default=5, show_default=True, help="Grade in degrees used to decide if a chunk is uphill, downhill, or flat.")
-def muntertool(gpxfile, chunk_length, grade_cutoff):
+@click.option('--progress/--no-progress', default=False, help="Show a progress bar as gpx points are processed")
+def muntertool(gpxfile, chunk_length, grade_cutoff, progress):
     """Analyze GPXFILE and output statistics about the Munter method rate of travel."""
 
     # Parse the GPX file
@@ -28,7 +30,7 @@ def muntertool(gpxfile, chunk_length, grade_cutoff):
     # Break track into chunks
     chunks = []
     for segment in track.segments:
-        chunks.extend(chunkify(segment, chunklength=chunk_length))
+        chunks.extend(chunkify(segment, chunklength=chunk_length, show_progress=progress))
     
     if(not len(chunks) > 0):
         raise click.UsageError("Error: Could not extract chunks from track.".format(len(gpx.tracks)), ctx=None)
@@ -113,14 +115,14 @@ class Chunk:
             self.last_point,
             self.distance)
 
-def chunkify(segment, chunklength=50):
+def chunkify(segment, chunklength=50, show_progress=True):
     chunks = []
 
     current_chunk_distance = 0
     current_chunk_beginning_point = None 
     current_chunk_last_point = None
 
-    for point in segment.points: 
+    for point in tqdm(segment.points, desc="Processing Points", disable=not show_progress): 
         if(current_chunk_beginning_point == None):
             current_chunk_beginning_point = point 
             current_chunk_last_point = point 
