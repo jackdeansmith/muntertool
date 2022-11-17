@@ -70,9 +70,7 @@ def chunk_report(chunks, grade_cutoff):
         category = grade_classification(chunk, grade_cutoff)
         table.append([idx, chunk.distance, chunk.delta_elevation, chunk.delta_time, formatted_grade(chunk.grade), category, chunk.munter_rate])
 
-    preamble = "Chunk Report:"
-    table = tabulate(table, headers, tablefmt="simple")
-    return preamble + '\n' + table
+    return tabulate(table, headers, tablefmt="simple")
 
 def statistical_report(chunks, grade_cutoff, desired_percentiles=[0.5]):
 
