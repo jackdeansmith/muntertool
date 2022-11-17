@@ -16,6 +16,33 @@ SECONDS_PER_HOUR = 60 * 60
 def stats(gpxfile, chunk_length, grade_cutoff, progress):
     """Analyze GPXFILE and output rate statistics."""
 
+    track = shared_parse_gpx_track(gpxfile)
+    chunks = chunkify_track(track, chunklength=chunk_length, show_progress=progress)
+    
+    if(not len(chunks) > 0):
+        raise click.UsageError("Error: Could not extract chunks from track.", ctx=None)
+
+    # Statistical report 
+    print(statistical_report(chunks, grade_cutoff))
+
+@click.command()
+@click.argument('gpxfile', type=click.File('r'))
+@click.option('--chunk-length', default=50.0, show_default=True, help="Length of chunk in meters that track is broken into for analysis.")
+@click.option('--grade-cutoff', default=5, show_default=True, help="Grade in degrees used to decide if a chunk is uphill, downhill, or flat.")
+@click.option('--progress/--no-progress', default=False, help="Show a progress bar as gpx points are processed")
+def chunks(gpxfile, chunk_length, grade_cutoff, progress):
+    """Break GPXFILE into chunks and output details."""
+
+    track = shared_parse_gpx_track(gpxfile)
+    chunks = chunkify_track(track, chunklength=chunk_length, show_progress=progress)
+    
+    if(not len(chunks) > 0):
+        raise click.UsageError("Error: Could not extract chunks from track.", ctx=None)
+
+    # Statistical report 
+    print(chunk_report(chunks, grade_cutoff))
+
+def shared_parse_gpx_track(gpxfile):
     # Parse the GPX file
     try:
         gpx = gpxpy.parse(gpxfile)
@@ -27,16 +54,7 @@ def stats(gpxfile, chunk_length, grade_cutoff, progress):
         raise click.UsageError("Error: GPX file must contain exactly one track. Found {} tracks.".format(len(gpx.tracks)), ctx=None)
     track = gpx.tracks[0]
 
-    # Break track into chunks
-    chunks = []
-    for segment in track.segments:
-        chunks.extend(chunkify(segment, chunklength=chunk_length, show_progress=progress))
-    
-    if(not len(chunks) > 0):
-        raise click.UsageError("Error: Could not extract chunks from track.".format(len(gpx.tracks)), ctx=None)
-
-    # Statistical report 
-    print(statistical_report(chunks, grade_cutoff))
+    return track
 
 def chunk_report(chunks, grade_cutoff):
     headers = ["Chunk", "Distance", "Elevation", "Time", "Grade", "Category", "Munter Rate"]
@@ -50,7 +68,7 @@ def chunk_report(chunks, grade_cutoff):
         table.append([idx, chunk.distance, chunk.delta_elevation, chunk.delta_time, formatted_grade(chunk.grade), category, chunk.munter_rate])
 
     preamble = "Chunk Report:"
-    table = tabulate(table, headers, tablefmt="plain")
+    table = tabulate(table, headers, tablefmt="simple")
     return preamble + '\n' + table
 
 def statistical_report(chunks, grade_cutoff):
@@ -115,7 +133,13 @@ class Chunk:
             self.last_point,
             self.distance)
 
-def chunkify(segment, chunklength=50, show_progress=True):
+def chunkify_track(track, chunklength=50, show_progress=True):
+    chunks = []
+    for segment in track.segments:
+        chunks.extend(chunkify_segment(segment, chunklength=chunklength, show_progress=show_progress))
+    return chunks
+
+def chunkify_segment(segment, chunklength=50, show_progress=True):
     chunks = []
 
     current_chunk_distance = 0
@@ -176,3 +200,4 @@ def cli():
     pass
 
 cli.add_command(stats)
+cli.add_command(chunks)
