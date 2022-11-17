@@ -3,7 +3,6 @@ import click
 import gpxpy
 import gpxpy.gpx
 import gisutil
-import munterfuncs
 from tabulate import tabulate
 
 SECONDS_PER_HOUR = 60 * 60
@@ -122,7 +121,7 @@ class Chunk:
 
         self.delta_elevation = self.last_point.elevation - self.first_point.elevation 
         self.delta_time = self.last_point.time - self.first_point.time
-        self.munter_rate = munterfuncs.munter_reverse(self.distance, self.delta_elevation, self.delta_time.total_seconds()/SECONDS_PER_HOUR)
+        self.munter_rate = munter_reverse(self.distance, self.delta_elevation, self.delta_time.total_seconds()/SECONDS_PER_HOUR)
 
         self.grade = degrees(atan(self.delta_elevation/self.distance))
 
@@ -169,6 +168,18 @@ def grade_classification(chunk, grade_cutoff):
         return "FLAT"
     else: 
         return "DOWN"
+
+# Gets a time in hours from distance m, elevation in m, and dimensionless munter rate value
+def munter_forward(distance, elevation, rate):
+    return munter_work(distance, elevation) / rate
+
+# Gets a munter rate value from a distance in m, elevation in m, and time
+def munter_reverse(distance, elevation, time):
+    return munter_work(distance, elevation) / time
+
+# Accepts a distance and elevation and returns a munter work value, this is divided by rate to get time
+def munter_work(distance, elevation):
+ return ((distance/1000) + abs(elevation)/100)
 
 
 if __name__ == '__main__':
