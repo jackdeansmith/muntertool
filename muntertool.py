@@ -2,8 +2,8 @@ from math import atan, radians, degrees
 import click
 import gpxpy
 import gpxpy.gpx
-import gisutil
 from tabulate import tabulate
+import pyproj
 
 SECONDS_PER_HOUR = 60 * 60
 
@@ -144,7 +144,7 @@ def chunkify(segment, chunklength=50):
             current_chunk_last_point = point 
             continue 
 
-        current_chunk_distance += gisutil.distance(current_chunk_last_point.longitude, current_chunk_last_point.latitude, point.longitude, point.latitude)
+        current_chunk_distance += distance(current_chunk_last_point.longitude, current_chunk_last_point.latitude, point.longitude, point.latitude)
         current_chunk_last_point = point
 
         if(current_chunk_distance >= chunklength):
@@ -180,6 +180,12 @@ def munter_reverse(distance, elevation, time):
 # Accepts a distance and elevation and returns a munter work value, this is divided by rate to get time
 def munter_work(distance, elevation):
  return ((distance/1000) + abs(elevation)/100)
+
+# returns elipsoid distance between start and end location specified in degrees, returns result in meters
+def distance(long1, lat1, long2, lat2):
+    geodesic = pyproj.Geod(ellps='WGS84')
+    fwd_azimuth,back_azimuth,distance = geodesic.inv(long1, lat1, long2, lat2)
+    return distance
 
 
 if __name__ == '__main__':
