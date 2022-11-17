@@ -17,4 +17,4 @@ dependencies = [
 ]
 
 [project.scripts]
-muntertool = "muntertool.muntertool:muntertool"
+muntertool = "muntertool.muntertool:cli"

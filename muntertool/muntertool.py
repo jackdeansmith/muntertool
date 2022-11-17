@@ -13,8 +13,8 @@ SECONDS_PER_HOUR = 60 * 60
 @click.option('--chunk-length', default=50.0, show_default=True, help="Length of chunk in meters that track is broken into for analysis.")
 @click.option('--grade-cutoff', default=5, show_default=True, help="Grade in degrees used to decide if a chunk is uphill, downhill, or flat.")
 @click.option('--progress/--no-progress', default=False, help="Show a progress bar as gpx points are processed")
-def muntertool(gpxfile, chunk_length, grade_cutoff, progress):
-    """Analyze GPXFILE and output statistics about the Munter method rate of travel."""
+def stats(gpxfile, chunk_length, grade_cutoff, progress):
+    """Analyze GPXFILE and output rate statistics."""
 
     # Parse the GPX file
     try:
@@ -171,6 +171,8 @@ def distance(long1, lat1, long2, lat2):
     fwd_azimuth,back_azimuth,distance = geodesic.inv(long1, lat1, long2, lat2)
     return distance
 
+@click.group()
+def cli():
+    pass
 
-if __name__ == '__main__':
-    muntertool()
+cli.add_command(stats)
