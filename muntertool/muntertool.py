@@ -5,6 +5,8 @@ import gpxpy.gpx
 from tabulate import tabulate
 import pyproj
 from tqdm import tqdm
+import math
+import functools
 
 SECONDS_PER_HOUR = 60 * 60
 
@@ -12,8 +14,9 @@ SECONDS_PER_HOUR = 60 * 60
 @click.argument('gpxfile', type=click.File('r'))
 @click.option('--chunk-length', default=50.0, show_default=True, help="Length of chunk in meters that track is broken into for analysis.")
 @click.option('--grade-cutoff', default=5, show_default=True, help="Grade in degrees used to decide if a chunk is uphill, downhill, or flat.")
+@click.option("--percentile", multiple=True, default=[0.5], help="Calculate this percentile for each chunk type. Multiple uses allowed. [default: 0.5]")
 @click.option('--progress/--no-progress', default=False, help="Show a progress bar as gpx points are processed")
-def stats(gpxfile, chunk_length, grade_cutoff, progress):
+def stats(gpxfile, chunk_length, grade_cutoff, progress, percentile):
     """Analyze GPXFILE and output rate statistics."""
 
     track = shared_parse_gpx_track(gpxfile)
@@ -23,7 +26,7 @@ def stats(gpxfile, chunk_length, grade_cutoff, progress):
         raise click.UsageError("Error: Could not extract chunks from track.", ctx=None)
 
     # Statistical report 
-    print(statistical_report(chunks, grade_cutoff))
+    print(statistical_report(chunks, grade_cutoff, percentile))
 
 @click.command()
 @click.argument('gpxfile', type=click.File('r'))
@@ -71,49 +74,62 @@ def chunk_report(chunks, grade_cutoff):
     table = tabulate(table, headers, tablefmt="simple")
     return preamble + '\n' + table
 
-def statistical_report(chunks, grade_cutoff):
+def statistical_report(chunks, grade_cutoff, desired_percentiles=[0.5]):
 
     # Classify all the chunks 
-    uphill_chunks = []
+    up_chunks = []
     flat_chunks = []
-    downhill_chunks = []
-
+    down_chunks = []
     for chunk in chunks:
         classification = grade_classification(chunk, grade_cutoff)
         if(classification == "UP"):
-            uphill_chunks.append(chunk)
+            up_chunks.append(chunk)
         elif(classification == "FLAT"):
             flat_chunks.append(chunk)
         elif(classification == "DOWN"):
-            downhill_chunks.append(chunk)
+            down_chunks.append(chunk)
 
-    # Mean munter rates in each class
-    mean_uphill_munter = mean_munter_rate(uphill_chunks)
-    mean_flat_munter = mean_munter_rate(flat_chunks)
-    mean_downhill_munter = mean_munter_rate(downhill_chunks)
+    up_rates = [x.munter_rate for x in up_chunks]
+    flat_rates = [x.munter_rate for x in flat_chunks]
+    down_rates = [x.munter_rate for x in  down_chunks]
 
-    # Median munter rates in each class
-    median_uphill_munter = median_munter_rate(uphill_chunks)
-    median_flat_munter = median_munter_rate(flat_chunks)
-    median_downhill_munter = median_munter_rate(downhill_chunks)
+    mean_uphill_munter = mean(up_rates)
+    mean_flat_munter = mean(flat_rates)
+    mean_downhill_munter = mean(down_rates)
 
-    headers = ["Grade", "#Chunks", "Mean Rate", "50th Percentile Rate"]
+    percentile_headers = [pretty_print_percentile_header(x) for x in desired_percentiles]
+    headers = ["Grade", "#Chunks", "Mean Rate"] + percentile_headers
+
     table = []
-    table.append(["UP", len(uphill_chunks), mean_uphill_munter, median_uphill_munter])
-    table.append(["FLAT", len(flat_chunks), mean_flat_munter, median_flat_munter])
-    table.append(["DOWN", len(downhill_chunks), mean_downhill_munter, median_downhill_munter])
+    table.append(["UP", len(up_chunks), mean_uphill_munter] + percentiles(up_rates, desired_percentiles))
+    table.append(["FLAT", len(flat_chunks), mean_flat_munter]+ percentiles(flat_rates, desired_percentiles))
+    table.append(["DOWN", len(down_chunks), mean_downhill_munter] + percentiles(down_rates, desired_percentiles))
     return tabulate(table, headers, tablefmt="simple")
 
-def mean_munter_rate(chunks):
-    return sum([x.munter_rate for x in chunks]) / len(chunks)
+def pretty_print_percentile_header(num):
+    return "{}th Percentile Rate".format(num * 100)
 
-def median_munter_rate(chunks):
-    rates = [x.munter_rate for x in chunks]
-    rates.sort()
-    if(len(rates) % 2 == 0):
-        return (rates[len(rates)//2] + rates[len(rates)//2 - 1]) / 2
-    else: 
-        return rates[len(rates)//2]
+def mean(nums):
+    return sum(nums) / len(nums)
+
+def percentiles(data, desired_percentiles):
+    data.sort()
+    results = []
+    for x in desired_percentiles: 
+        results.append(percentile(data, x))
+    return results
+
+def percentile(N, percent, key=lambda x:x):
+   if not N:
+       return None
+   k = (len(N)-1) * percent
+   f = math.floor(k)
+   c = math.ceil(k)
+   if f == c:
+       return key(N[int(k)])
+   d0 = key(N[int(f)]) * (c-k)
+   d1 = key(N[int(c)]) * (k-f)
+   return d0+d1
 
 class Chunk: 
     def __init__(self, first_point, last_point, distance):
