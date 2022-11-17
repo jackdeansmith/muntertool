@@ -15,7 +15,7 @@ SECONDS_PER_HOUR = 60 * 60
 @click.option('--chunk-length', default=50.0, show_default=True, help="Length of chunk in meters that track is broken into for analysis.")
 @click.option('--grade-cutoff', default=5, show_default=True, help="Grade in degrees used to decide if a chunk is uphill, downhill, or flat.")
 @click.option("--percentile", multiple=True, default=[0.5], help="Calculate this percentile for each chunk type. Multiple uses allowed. [default: 0.5]")
-@click.option('--progress/--no-progress', default=False, help="Show a progress bar as gpx points are processed")
+@click.option('--progress', is_flag=True, default=False, help="Show a progress bar as gpx points are processed")
 def stats(gpxfile, chunk_length, grade_cutoff, progress, percentile):
     """Analyze GPXFILE and output rate statistics."""
 
@@ -32,7 +32,7 @@ def stats(gpxfile, chunk_length, grade_cutoff, progress, percentile):
 @click.argument('gpxfile', type=click.File('r'))
 @click.option('--chunk-length', default=50.0, show_default=True, help="Length of chunk in meters that track is broken into for analysis.")
 @click.option('--grade-cutoff', default=5, show_default=True, help="Grade in degrees used to decide if a chunk is uphill, downhill, or flat.")
-@click.option('--progress/--no-progress', default=False, help="Show a progress bar as gpx points are processed")
+@click.option('--progress', is_flag=True, default=False, help="Show a progress bar as gpx points are processed")
 def chunks(gpxfile, chunk_length, grade_cutoff, progress):
     """Break GPXFILE into chunks and output details."""
 
