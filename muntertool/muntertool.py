@@ -9,11 +9,10 @@ SECONDS_PER_HOUR = 60 * 60
 
 @click.command()
 @click.argument('gpxfile', type=click.File('r'))
-@click.option('--chunk-length', default=50.0, show_default=True, help="Length of chunk in meters that track is broken into for analysis. Defaults to value that caltopo uses.")
+@click.option('--chunk-length', default=50.0, show_default=True, help="Length of chunk in meters that track is broken into for analysis.")
 @click.option('--grade-cutoff', default=5, show_default=True, help="Grade in degrees used to decide if a chunk is uphill, downhill, or flat.")
 def muntertool(gpxfile, chunk_length, grade_cutoff):
-    """Analyze the track described by GPXFILE"""
-    # TODO: Better docs here
+    """Analyze GPXFILE and output statistics about the Munter method rate of travel."""
 
     # Parse the GPX file
     try:
@@ -21,7 +20,7 @@ def muntertool(gpxfile, chunk_length, grade_cutoff):
     except:
         raise click.UsageError("Error: Failed to parse GPX file. Check that the file is not corrupted.", ctx=None)
 
-    # Validate that the GPX contains exactly one track, TODO: support multi-track gpx files
+    # Validate that the GPX contains exactly one track
     if(not len(gpx.tracks) == 1):
         raise click.UsageError("Error: GPX file must contain exactly one track. Found {} tracks.".format(len(gpx.tracks)), ctx=None)
     track = gpx.tracks[0]
@@ -33,9 +32,6 @@ def muntertool(gpxfile, chunk_length, grade_cutoff):
     
     if(not len(chunks) > 0):
         raise click.UsageError("Error: Could not extract chunks from track.".format(len(gpx.tracks)), ctx=None)
-
-    # Chunk report, TODO: bring back the chunk report later 
-    # print(chunk_report(chunks, grade_cutoff))
 
     # Statistical report 
     print(statistical_report(chunks, grade_cutoff))
