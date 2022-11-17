@@ -34,8 +34,8 @@ def muntertool(gpxfile, chunk_length, grade_cutoff):
     if(not len(chunks) > 0):
         raise click.UsageError("Error: Could not extract chunks from track.".format(len(gpx.tracks)), ctx=None)
 
-    # Chunk report 
-    print(chunk_report(chunks, grade_cutoff))
+    # Chunk report, TODO: bring back the chunk report later 
+    # print(chunk_report(chunks, grade_cutoff))
 
     # Statistical report 
     print(statistical_report(chunks, grade_cutoff))
