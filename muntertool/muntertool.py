@@ -7,8 +7,8 @@ import pyproj
 from tqdm import tqdm
 import math
 import functools
-from .utils import break_remove
-from .utils.distance import distance
+from . import break_remove
+from .utils import distance
 
 SECONDS_PER_HOUR = 60 * 60
 
@@ -180,7 +180,7 @@ def chunkify_track(track, chunklength=50, show_progress=True):
 def chunkify_segment(segment, chunklength=50, show_progress=True):
     chunks = []
 
-    # break_remove.split_by_breaks(segment)
+    break_remove.split_by_breaks(segment)
 
     current_chunk_distance = 0
     current_chunk_beginning_point = None 

@@ -1,5 +1,5 @@
 import gpxpy
-from .distance import distance
+from .utils import distance
 
 def split_by_breaks(segment, stopped_speed_threshold=0.2777777778):
     """Accepts a gpx segment and a break speed threshold, returns (moving segments, stopped segments)"""
