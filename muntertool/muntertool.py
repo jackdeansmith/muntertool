@@ -7,6 +7,8 @@ import pyproj
 from tqdm import tqdm
 import math
 import functools
+from .utils import break_remove
+from .utils.distance import distance
 
 SECONDS_PER_HOUR = 60 * 60
 
@@ -178,6 +180,8 @@ def chunkify_track(track, chunklength=50, show_progress=True):
 def chunkify_segment(segment, chunklength=50, show_progress=True):
     chunks = []
 
+    # break_remove.split_by_breaks(segment)
+
     current_chunk_distance = 0
     current_chunk_beginning_point = None 
     current_chunk_last_point = None
@@ -224,12 +228,6 @@ def munter_reverse(distance, elevation, time):
 # Accepts a distance and elevation and returns a munter work value, this is divided by rate to get time
 def munter_work(distance, elevation):
  return ((distance/1000) + abs(elevation)/100)
-
-# returns elipsoid distance between start and end location specified in degrees, returns result in meters
-def distance(long1, lat1, long2, lat2):
-    geodesic = pyproj.Geod(ellps='WGS84')
-    fwd_azimuth,back_azimuth,distance = geodesic.inv(long1, lat1, long2, lat2)
-    return distance
 
 @click.group()
 def cli():
