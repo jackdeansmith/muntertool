@@ -48,6 +48,20 @@ def chunks(gpxfile, chunk_length, grade_cutoff, showcordinates, progress):
     # Statistical report 
     print(chunk_report(chunks, grade_cutoff, showcordinates))
 
+@click.command()
+@click.argument('gpxfile', type=click.File('r'))
+def split(gpxfile):
+
+    track = shared_parse_gpx_track(gpxfile)
+    first_segment = track.segments[0]
+    segments = break_remove.split_breaks(first_segment.points, stopped_threshold_speed=0.2, break_duration_threshold=5*60)
+    segments = [(isBreak, gpxpy.gpx.GPXTrackSegment(points)) for (isBreak, points) in segments]
+
+    for (isBreak, segment) in segments:
+        print("{} segment:".format("Break" if isBreak else "Moving"))
+        print("     Start: {}".format(segment.points[0]))
+        print("     End: {}".format(segment.points[-1]))
+
 def shared_parse_gpx_track(gpxfile):
     # Parse the GPX file
     try:
@@ -180,7 +194,7 @@ def chunkify_track(track, chunklength=50, show_progress=True):
 def chunkify_segment(segment, chunklength=50, show_progress=True):
     chunks = []
 
-    break_remove.split_by_breaks(segment)
+    break_remove.split_by_stopped(segment)
 
     current_chunk_distance = 0
     current_chunk_beginning_point = None 
@@ -235,3 +249,4 @@ def cli():
 
 cli.add_command(stats)
 cli.add_command(chunks)
+cli.add_command(split) # TODO remove my split command
