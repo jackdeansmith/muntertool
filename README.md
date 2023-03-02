@@ -7,7 +7,7 @@ Muntertool is a python command line tool for reading GPS tracks and finding the 
 The Munter method is a technique to take a cross country travel route and estimate the time it will take to travel using the topography of the route and a set of customizable rate parameters. This technique often produces useful estimates and is integrated directly into popular mapping tools like CalTopo. The basic formula for munter method estimation is: 
 
 ```
-TIME [hours] = DISTANCE [km] + ((ELEVATION [meters]/100)) / RATE)
+TIME [hours] = (DISTANCE [km] + (ELEVATION [meters]/100)) / RATE)
 ```
 
 Since rate is variable by grade, a different rate parameter is used for Uphill, Flat, and Downhill segments. For example, Caltopo defaults to rate parameters (UP=4 FLAT=6 DOWN=10) for backcountry skiing and (UP=4 FLAT=6 DOWN=6) for hiking on a trail. Since every group travels at a different pace, these parameters usually have to be tweaked to get more accurate estimates. The purpose of this tool is to assist that guesswork by taking an actual recording from a previous trip and analyzing the track to show your munter rates. These rates can then be plugged back into the formula when planning a future trip. 
